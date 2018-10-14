@@ -4,6 +4,7 @@
 #include <string>
 #include <tuple>
 #include <map>
+#include <limits>
 
 typedef std::tuple<int, int, int> RGB;
 
@@ -159,13 +160,23 @@ class Color {
 public:
   int r = 0;
   int red() { return r; }
-  Color* red(int v) { r = v; return this;}
+  Color* red(int v) { r = v; updateHSV(); return this;}
   int g = 0;
   int green() { return g; }
-  Color* green(int v) { g = v; return this;}
+  Color* green(int v) { g = v; updateHSV(); return this;}
   int b = 0;
   int blue() { return b; }
-  Color* blue(int v) { b = v; return this;}
+  Color* blue(int v) { b = v; updateHSV(); return this;}
+
+  double h = 0;
+  double hue() { return h; }
+  Color* hue(double _h) { h = _h; updateRGB(); return this;}
+  double s = 0;
+  double saturation() { return s; }
+  Color* saturation(double _s) { s = _s; updateRGB(); return this;}
+  double v = 0;
+  double value() { return v; }
+  Color* value(double _v) { v = _v; updateRGB(); return this;}
 
   std::string hex() {
     char hexcol[16];
@@ -173,7 +184,13 @@ public:
     return std::string(hexcol);
   }
 
-  Color(int _r, int _g, int _b) : r(_r), g(_g), b(_b) {}
+  Color(int _r, int _g, int _b) : r(_r), g(_g), b(_b) {
+    updateHSV();
+  }
+
+  Color(double _h, double _s, double _v) : h(_h), s(_s), v(_v) {
+    updateRGB();
+  }
 
   static RGB parseHexString(std::string hexString) {
     if (hexString.front() != '#')
@@ -217,7 +234,25 @@ public:
       g = 255;
     if (b > 255)
       b = 255;
+    updateHSV();
   }
+
+    void updateHSV() {
+    auto hsv = rgb2hsv({r/255.f, g/255.f, b/255.f});
+    h = hsv.h;
+    s = hsv.s;
+    v = hsv.v;
+
+    }
+
+    void updateRGB() {
+      auto rgb = hsv2rgb({h,s,v});
+
+      r = rgb.r * 255;
+      g = rgb.g * 255;
+      b = rgb.b * 255;
+    }
+
 typedef struct {
     double r;       // a fraction between 0 and 1
     double g;       // a fraction between 0 and 1
@@ -229,8 +264,6 @@ typedef struct {
     double s;       // a fraction between 0 and 1
     double v;       // a fraction between 0 and 1
 } hsv;
-
-static rgb   hsv2rgb(hsv in);
 
 static hsv rgb2hsv(rgb in)
 {
@@ -257,7 +290,7 @@ static hsv rgb2hsv(rgb in)
         // if max is 0, then r = g = b = 0
         // s = 0, h is undefined
         out.s = 0.0;
-        out.h = NAN;                            // its now undefined
+        out.h = std::numeric_limits<double>::quiet_NaN();                            // its now undefined
         return out;
     }
     if( in.r >= max )                           // > is bogus, just keeps compilor happy
@@ -277,7 +310,7 @@ static hsv rgb2hsv(rgb in)
 }
 
 
-rgb hsv2rgb(hsv in)
+static rgb hsv2rgb(hsv in)
 {
     double      hh, p, q, t, ff;
     long        i;

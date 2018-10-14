@@ -7,6 +7,11 @@ int main() {
     printf("  RGB: %d, %d, %d\n", c.red(), c.green(), c.blue());
     printf("  HEX: %s\n", c.hex().c_str());
 
+    printf("\nColor from 'pink'\n");
+    c = Color::fromWebName("pink");
+    printf("  RGB: %d, %d, %d\n", c.red(), c.green(), c.blue());
+    printf("  HEX: %s\n", c.hex().c_str());
+
     printf("\nBlend #fff color with #000 (k = 0.5)\n");
     auto w = Color::fromHexString("#ffffff");
     auto b = Color::fromHexString("#000");

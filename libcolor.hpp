@@ -3,70 +3,11 @@
 #include <sstream>
 #include <string>
 #include <tuple>
+#include <map>
 
 typedef std::tuple<int, int, int> RGB;
 
-class Color {
-public:
-  int r = 0;
-  int red() { return r; }
-  Color* red(int v) { r = v; return this;}
-  int g = 0;
-  int green() { return g; }
-  Color* green(int v) { g = v; return this;}
-  int b = 0;
-  int blue() { return b; }
-  Color* blue(int v) { b = v; return this;}
-
-  std::string hex() {
-    char hexcol[16];
-    snprintf(hexcol, sizeof hexcol, "#%02x%02x%02x", r, g, b);
-    return std::string(hexcol);
-  }
-
-  Color(int _r, int _g, int _b) : r(_r), g(_g), b(_b) {}
-
-  static RGB parseHexString(std::string hexString) {
-    if (hexString.front() != '#')
-        throw std::invalid_argument("hexString");
-    hexString = hexString.substr(1, hexString.size() - 1);
-    if (hexString.size() == 3) {
-      char hexcol[8];
-      snprintf(hexcol, sizeof hexcol, "%c%c%c%c%c%c", hexString[0],
-               hexString[0], hexString[1], hexString[1], hexString[2],
-               hexString[2]);
-      hexString = std::string(hexcol);
-    }
-    std::stringstream st;
-    st << hexString;
-    int color;
-    st >> std::hex >> color;
-    int _r = (color & 0xff0000) >> 16;
-    int _g = (color & 0x00ff00) >> 8;
-    int _b = (color & 0x0000ff);
-    return std::make_tuple(_r, _g, _b);
-  }
-
-  static Color fromHexString(std::string hexString) {
-    auto rgb = parseHexString(hexString);
-    return Color(std::get<0>(rgb), std::get<1>(rgb), std::get<2>(rgb));
-  }
-
-  void blend(Color color, float k = 0.5) {
-    r = r * (1 - k) + color.r * k;
-    g = g * (1 - k) + color.g * k;
-    b = b * (1 - k) + color.b * k;
-
-    if (r > 255)
-      r = 255;
-    if (g > 255)
-      g = 255;
-    if (b > 255)
-      b = 255;
-  }
-};
-
-/* Web colors
+std::map<std::string, std::string> webColorNames =
 {
   {"maroon", "#800000"},
   {"dark red", "#8B0000"},
@@ -212,7 +153,188 @@ public:
   {"gainsboro", "#DCDCDC"},
   {"white smoke", "#F5F5F5"},
   {"white", "#FFFFFF"}
+};
+
+class Color {
+public:
+  int r = 0;
+  int red() { return r; }
+  Color* red(int v) { r = v; return this;}
+  int g = 0;
+  int green() { return g; }
+  Color* green(int v) { g = v; return this;}
+  int b = 0;
+  int blue() { return b; }
+  Color* blue(int v) { b = v; return this;}
+
+  std::string hex() {
+    char hexcol[16];
+    snprintf(hexcol, sizeof hexcol, "#%02x%02x%02x", r, g, b);
+    return std::string(hexcol);
+  }
+
+  Color(int _r, int _g, int _b) : r(_r), g(_g), b(_b) {}
+
+  static RGB parseHexString(std::string hexString) {
+    if (hexString.front() != '#')
+        throw std::invalid_argument("hexString");
+    hexString = hexString.substr(1, hexString.size() - 1);
+    if (hexString.size() == 3) {
+      char hexcol[8];
+      snprintf(hexcol, sizeof hexcol, "%c%c%c%c%c%c", hexString[0],
+               hexString[0], hexString[1], hexString[1], hexString[2],
+               hexString[2]);
+      hexString = std::string(hexcol);
+    }
+    std::stringstream st;
+    st << hexString;
+    int color;
+    st >> std::hex >> color;
+    int _r = (color & 0xff0000) >> 16;
+    int _g = (color & 0x00ff00) >> 8;
+    int _b = (color & 0x0000ff);
+    return std::make_tuple(_r, _g, _b);
+  }
+
+  static Color fromWebName(std::string name) {
+    auto hexString = webColorNames[name];
+    return fromHexString(hexString);
+  }
+
+  static Color fromHexString(std::string hexString) {
+    auto rgb = parseHexString(hexString);
+    return Color(std::get<0>(rgb), std::get<1>(rgb), std::get<2>(rgb));
+  }
+
+  void blend(Color color, float k = 0.5) {
+    r = r * (1 - k) + color.r * k;
+    g = g * (1 - k) + color.g * k;
+    b = b * (1 - k) + color.b * k;
+
+    if (r > 255)
+      r = 255;
+    if (g > 255)
+      g = 255;
+    if (b > 255)
+      b = 255;
+  }
+typedef struct {
+    double r;       // a fraction between 0 and 1
+    double g;       // a fraction between 0 and 1
+    double b;       // a fraction between 0 and 1
+} rgb;
+
+typedef struct {
+    double h;       // angle in degrees
+    double s;       // a fraction between 0 and 1
+    double v;       // a fraction between 0 and 1
+} hsv;
+
+static rgb   hsv2rgb(hsv in);
+
+static hsv rgb2hsv(rgb in)
+{
+    hsv         out;
+    double      min, max, delta;
+
+    min = in.r < in.g ? in.r : in.g;
+    min = min  < in.b ? min  : in.b;
+
+    max = in.r > in.g ? in.r : in.g;
+    max = max  > in.b ? max  : in.b;
+
+    out.v = max;                                // v
+    delta = max - min;
+    if (delta < 0.00001)
+    {
+        out.s = 0;
+        out.h = 0; // undefined, maybe nan?
+        return out;
+    }
+    if( max > 0.0 ) { // NOTE: if Max is == 0, this divide would cause a crash
+        out.s = (delta / max);                  // s
+    } else {
+        // if max is 0, then r = g = b = 0
+        // s = 0, h is undefined
+        out.s = 0.0;
+        out.h = NAN;                            // its now undefined
+        return out;
+    }
+    if( in.r >= max )                           // > is bogus, just keeps compilor happy
+        out.h = ( in.g - in.b ) / delta;        // between yellow & magenta
+    else
+    if( in.g >= max )
+        out.h = 2.0 + ( in.b - in.r ) / delta;  // between cyan & yellow
+    else
+        out.h = 4.0 + ( in.r - in.g ) / delta;  // between magenta & cyan
+
+    out.h *= 60.0;                              // degrees
+
+    if( out.h < 0.0 )
+        out.h += 360.0;
+
+    return out;
 }
-  */
+
+
+rgb hsv2rgb(hsv in)
+{
+    double      hh, p, q, t, ff;
+    long        i;
+    rgb         out;
+
+    if(in.s <= 0.0) {       // < is bogus, just shuts up warnings
+        out.r = in.v;
+        out.g = in.v;
+        out.b = in.v;
+        return out;
+    }
+    hh = in.h;
+    if(hh >= 360.0) hh = 0.0;
+    hh /= 60.0;
+    i = (long)hh;
+    ff = hh - i;
+    p = in.v * (1.0 - in.s);
+    q = in.v * (1.0 - (in.s * ff));
+    t = in.v * (1.0 - (in.s * (1.0 - ff)));
+
+    switch(i) {
+    case 0:
+        out.r = in.v;
+        out.g = t;
+        out.b = p;
+        break;
+    case 1:
+        out.r = q;
+        out.g = in.v;
+        out.b = p;
+        break;
+    case 2:
+        out.r = p;
+        out.g = in.v;
+        out.b = t;
+        break;
+
+    case 3:
+        out.r = p;
+        out.g = q;
+        out.b = in.v;
+        break;
+    case 4:
+        out.r = t;
+        out.g = p;
+        out.b = in.v;
+        break;
+    case 5:
+    default:
+        out.r = in.v;
+        out.g = p;
+        out.b = q;
+        break;
+    }
+    return out;
+}
+};
+
 
 #endif // __LIBCOLOR_HPP_

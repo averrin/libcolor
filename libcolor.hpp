@@ -6,9 +6,10 @@
 #include <string>
 #include <tuple>
 
+namespace LibColor {
 typedef std::tuple<int, int, int> RGB;
 
-std::map<std::string, std::string> webColorNames = {
+const std::map<std::string, std::string> webColorNames = {
     {"maroon", "#800000"},
     {"dark red", "#8B0000"},
     {"brown", "#A52A2A"},
@@ -232,7 +233,7 @@ public:
   }
 
   static Color fromWebName(std::string name) {
-    auto hexString = webColorNames[name];
+    auto hexString = webColorNames.at(name);
     return fromHexString(hexString);
   }
 
@@ -381,5 +382,5 @@ public:
     return out;
   }
 };
-
+} // namespace LibColor
 #endif // __LIBCOLOR_HPP_

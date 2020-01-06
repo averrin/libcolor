@@ -8,6 +8,7 @@
 
 namespace LibColor {
 typedef std::tuple<int, int, int> RGB;
+typedef std::tuple<int, int, int, int> RGBA;
 
 const std::map<std::string, std::string> webColorNames = {
     {"maroon", "#800000"},
@@ -179,6 +180,14 @@ public:
     return this;
   }
 
+  int a = 255;
+  int alpha() { return a; }
+  Color *alpha(int v) {
+    a = v;
+    updateHSV();
+    return this;
+  }
+
   double h = 0;
   double hue() { return h; }
   Color *hue(double _h) {
@@ -207,11 +216,21 @@ public:
     return std::string(hexcol);
   }
 
+  std::string hexA() {
+    char hexcol[16];
+    snprintf(hexcol, sizeof hexcol, "#%02x%02x%02x%02x", r, g, b, a);
+    return std::string(hexcol);
+  }
+
+  Color() {}
+
   Color(int _r, int _g, int _b) : r(_r), g(_g), b(_b) { updateHSV(); }
+
+  Color(int _r, int _g, int _b, int _a) : r(_r), g(_g), b(_b), a(_a) { updateHSV(); }
 
   Color(double _h, double _s, double _v) : h(_h), s(_s), v(_v) { updateRGB(); }
 
-  static RGB parseHexString(std::string hexString) {
+  static RGBA parseHexString(std::string hexString) {
     if (hexString.front() != '#')
       throw std::invalid_argument("hexString");
     hexString = hexString.substr(1, hexString.size() - 1);
@@ -224,12 +243,25 @@ public:
     }
     std::stringstream st;
     st << hexString;
-    int color;
+    int64_t color;
     st >> std::hex >> color;
-    int _r = (color & 0xff0000) >> 16;
-    int _g = (color & 0x00ff00) >> 8;
-    int _b = (color & 0x0000ff);
-    return std::make_tuple(_r, _g, _b);
+    int _r;
+    int _g;
+    int _b;
+    int _a;
+    if (hexString.size() == 6) {
+      _r = (color & 0x00ff0000) >> 16;
+      _g = (color & 0x0000ff00) >> 8;
+      _b = (color & 0x000000ff);
+      _a = 255;
+    } else
+    if (hexString.size() == 8) {
+      _r = (color & 0xff000000) >> 24;
+      _g = (color & 0x00ff0000) >> 16;
+      _b = (color & 0x0000ff00) >> 8;
+      _a = (color & 0x000000ff);
+    }
+    return std::make_tuple(_r, _g, _b, _a);
   }
 
   static Color fromWebName(std::string name) {
@@ -239,13 +271,24 @@ public:
 
   static Color fromHexString(std::string hexString) {
     auto rgb = parseHexString(hexString);
-    return Color(std::get<0>(rgb), std::get<1>(rgb), std::get<2>(rgb));
+    return Color(std::get<0>(rgb), std::get<1>(rgb), std::get<2>(rgb), std::get<3>(rgb));
+  }
+
+  static Color fromString(std::string str) {
+    try {
+      auto rgb = parseHexString(str);
+      return Color(std::get<0>(rgb), std::get<1>(rgb), std::get<2>(rgb), std::get<3>(rgb));
+    } catch (std::invalid_argument &ex) {
+      auto hexString = webColorNames.at(str);
+      return fromHexString(hexString);
+    }
   }
 
   void blend(Color color, float k = 0.5) {
     r = r * (1 - k) + color.r * k;
     g = g * (1 - k) + color.g * k;
     b = b * (1 - k) + color.b * k;
+    a = a * (1 - k) + color.a * k;
 
     if (r > 255)
       r = 255;
@@ -253,6 +296,8 @@ public:
       g = 255;
     if (b > 255)
       b = 255;
+    if (a > 255)
+      a = 255;
     updateHSV();
   }
 
@@ -276,6 +321,13 @@ public:
     double g; // a fraction between 0 and 1
     double b; // a fraction between 0 and 1
   } rgb;
+
+  typedef struct {
+    double r; // a fraction between 0 and 1
+    double g; // a fraction between 0 and 1
+    double b; // a fraction between 0 and 1
+    double a; // a fraction between 0 and 1
+  } rgba;
 
   typedef struct {
     double h; // angle in degrees

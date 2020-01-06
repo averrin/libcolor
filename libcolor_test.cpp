@@ -1,8 +1,6 @@
 #include "libcolor.hpp"
 #include <string>
 
-using namespace LibColor;
-
 int main() {
   printf("Color from '#123'\n");
   auto c = Color::fromHexString("#123");

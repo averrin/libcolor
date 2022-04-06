@@ -1,5 +1,7 @@
-#include "libcolor.hpp"
+#include "include/libcolor/libcolor.hpp"
 #include <string>
+
+using namespace LibColor;
 
 int main() {
   printf("Color from '#123'\n");

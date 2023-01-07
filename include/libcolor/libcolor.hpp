@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <tuple>
+#include <cmath>
 
 namespace LibColor {
 typedef std::tuple<int, int, int> RGB;
@@ -287,20 +288,22 @@ public:
     }
   }
 
-  void add(Color color, float k = 0.5) {
-    r = r + color.r;
-    g = g + color.g;
-    b = b + color.b;
-    a = a + color.a;
+  void sub(Color color) {
+    r = 255 -
+        sqrt((pow(255 - r, 2) + pow(255 - color.r, 2)) / 2);
+    g = 255 -
+        sqrt((pow(255 - g, 2) + pow(255 - color.g, 2)) / 2);
+    b = 255 -
+        sqrt((pow(255 - b, 2) + pow(255 - color.b, 2)) / 2);
+    updateHSV();
+  }
 
-    if (r > 255)
-      r = 255;
-    if (g > 255)
-      g = 255;
-    if (b > 255)
-      b = 255;
-    if (a > 255)
-      a = 255;
+  void add(Color color) {
+    r = std::min(r + color.r, 255);
+    g = std::min(g + color.g, 255);
+    b = std::min(b + color.b, 255);
+    a = std::min(a + color.a, 255);
+
     updateHSV();
   }
   void blend(Color color, float k = 0.5) {

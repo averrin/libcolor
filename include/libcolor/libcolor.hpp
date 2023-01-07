@@ -226,7 +226,9 @@ public:
 
   Color(int _r, int _g, int _b) : r(_r), g(_g), b(_b) { updateHSV(); }
 
-  Color(int _r, int _g, int _b, int _a) : r(_r), g(_g), b(_b), a(_a) { updateHSV(); }
+  Color(int _r, int _g, int _b, int _a) : r(_r), g(_g), b(_b), a(_a) {
+    updateHSV();
+  }
 
   Color(double _h, double _s, double _v) : h(_h), s(_s), v(_v) { updateRGB(); }
 
@@ -254,8 +256,7 @@ public:
       _g = (color & 0x0000ff00) >> 8;
       _b = (color & 0x000000ff);
       _a = 255;
-    } else
-    if (hexString.size() == 8) {
+    } else if (hexString.size() == 8) {
       _r = (color & 0xff000000) >> 24;
       _g = (color & 0x00ff0000) >> 16;
       _b = (color & 0x0000ff00) >> 8;
@@ -271,19 +272,37 @@ public:
 
   static Color fromHexString(std::string hexString) {
     auto rgb = parseHexString(hexString);
-    return Color(std::get<0>(rgb), std::get<1>(rgb), std::get<2>(rgb), std::get<3>(rgb));
+    return Color(std::get<0>(rgb), std::get<1>(rgb), std::get<2>(rgb),
+                 std::get<3>(rgb));
   }
 
   static Color fromString(std::string str) {
     try {
       auto rgb = parseHexString(str);
-      return Color(std::get<0>(rgb), std::get<1>(rgb), std::get<2>(rgb), std::get<3>(rgb));
+      return Color(std::get<0>(rgb), std::get<1>(rgb), std::get<2>(rgb),
+                   std::get<3>(rgb));
     } catch (std::invalid_argument &ex) {
       auto hexString = webColorNames.at(str);
       return fromHexString(hexString);
     }
   }
 
+  void add(Color color, float k = 0.5) {
+    r = r + color.r;
+    g = g + color.g;
+    b = b + color.b;
+    a = a + color.a;
+
+    if (r > 255)
+      r = 255;
+    if (g > 255)
+      g = 255;
+    if (b > 255)
+      b = 255;
+    if (a > 255)
+      a = 255;
+    updateHSV();
+  }
   void blend(Color color, float k = 0.5) {
     r = r * (1 - k) + color.r * k;
     g = g * (1 - k) + color.g * k;

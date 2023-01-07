@@ -1,11 +1,11 @@
 #ifndef __LIBCOLOR_HPP_
 #define __LIBCOLOR_HPP_
+#include <cmath>
 #include <limits>
 #include <map>
 #include <sstream>
 #include <string>
 #include <tuple>
-#include <cmath>
 
 namespace LibColor {
 typedef std::tuple<int, int, int> RGB;
@@ -288,13 +288,18 @@ public:
     }
   }
 
+  void join(Color color) {
+    r = std::max(r, color.r);
+    g = std::max(g, color.g);
+    b = std::max(b, color.b);
+    a = std::max(a, color.a);
+    updateHSV();
+  }
+
   void sub(Color color) {
-    r = 255 -
-        sqrt((pow(255 - r, 2) + pow(255 - color.r, 2)) / 2);
-    g = 255 -
-        sqrt((pow(255 - g, 2) + pow(255 - color.g, 2)) / 2);
-    b = 255 -
-        sqrt((pow(255 - b, 2) + pow(255 - color.b, 2)) / 2);
+    r = 255 - sqrt((pow(255 - r, 2) + pow(255 - color.r, 2)) / 2);
+    g = 255 - sqrt((pow(255 - g, 2) + pow(255 - color.g, 2)) / 2);
+    b = 255 - sqrt((pow(255 - b, 2) + pow(255 - color.b, 2)) / 2);
     updateHSV();
   }
 
